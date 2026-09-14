@@ -1,0 +1,297 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+
+/* ---------------------------------------------------------------------------
+   Theme
+   ---------------------------------------------------------------------------
+   Palette sampled from digitizer.ae: pure black ground, a single warm yellow
+   accent, near-white text, and square corners throughout.
+
+   Two deliberate departures from that reference. It is a marketing site that
+   can afford large type and generous space; this is a dense tool, so the
+   scale is tighter. And the accent stays reserved for what the user acts on,
+   because a yellow used everywhere signals nothing.
+
+   Two modes now, dark first. `:root` carries light so that a page rendered
+   with no class attached is still readable, and `.dark` overrides it. The
+   default is dark because that is the brand, and the pre-paint script in
+   layout.tsx sets the class before the first frame so switching never flashes.
+
+   The accent survives both grounds only because it is never used as text on
+   white. #fecb1a on white fails contrast badly; as a fill behind black text
+   it passes comfortably. Where yellow has to BE the text, light mode uses a
+   darkened version of it instead.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --background: #ffffff;
+  --foreground: #111111;
+
+  --card: #fbfbfb;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+
+  --primary: #fecb1a;
+  --primary-foreground: #000000;
+
+  --secondary: #f1f1f1;
+  --secondary-foreground: #111111;
+
+  --muted: #f4f4f4;
+  --muted-foreground: #5d5d5d;
+
+  --accent: #f6f6f6;
+  /* Darkened accent: the yellow is unreadable as text on white. */
+  --accent-foreground: #8a6b00;
+
+  --destructive: #c01c1c;
+  --destructive-foreground: #ffffff;
+
+  --border: #e3e3e3;
+  --input: #e3e3e3;
+  --ring: #b98f00;
+
+  /* The ground an input sits on. See the rule using it further down: this
+     used to be a hardcoded near-black, which survived the move to two themes
+     by rendering black text boxes on a white page. */
+  --field: #ffffff;
+
+  --radius: 0px;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #000000;
+  --foreground: #dddddd;
+
+  /* Panels sit just off the ground so edges read without a heavy border. */
+  --card: #0e0e0e;
+  --card-foreground: #dddddd;
+  --popover: #141414;
+  --popover-foreground: #f0f0f0;
+
+  --primary: #fecb1a;
+  --primary-foreground: #000000;
+
+  --secondary: #1a1a1a;
+  --secondary-foreground: #dddddd;
+
+  --muted: #1a1a1a;
+  --muted-foreground: #858585;
+
+  --accent: #1f1f1f;
+  --accent-foreground: #fecb1a;
+
+  --destructive: #ff5c5c;
+  --destructive-foreground: #000000;
+
+  --border: #242424;
+  --input: #242424;
+  --ring: #fecb1a;
+
+  --field: #050505;
+
+  /* Square, like the reference. */
+  --radius: 0px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Only the ground and the text cross-fade on a theme switch. Transitioning
+   every property would drag the whole page through a repaint each time a
+   tooltip opens. */
+html.theme-switching body,
+html.theme-switching body * {
+  transition: background-color 150ms ease, border-color 150ms ease,
+    color 150ms ease;
+}
+
+/* Headings: tight tracking and heavier weight, as on the reference. */
+h1, h2, h3, .display {
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+/* The wordmark and nav use wide-tracked uppercase, which is the one place
+   the reference's display treatment reads well at small sizes. */
+.wordmark {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Accent underline for the active nav item, rather than a filled pill. */
+.nav-active { border-color: var(--primary); color: var(--foreground); }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+
+
+/* The preset's own .dark block is removed. The two blocks at the top of this
+   file are the single source of truth for both modes. */
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    @apply font-sans;
+  }
+}
+/* Rich editor typography.
+   The article is the product, so the editing surface renders it the way a CMS
+   will rather than as raw markdown. Tailwind's typography plugin would do this
+   too, but that is a build dependency for one component. */
+.prose-editor h1 {
+  font-size: 1.65rem;
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 1.4rem 0 0.7rem;
+  letter-spacing: -0.015em;
+}
+.prose-editor h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1.5rem 0 0.6rem;
+}
+.prose-editor h3 {
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.5rem;
+}
+.prose-editor h1:first-child,
+.prose-editor h2:first-child,
+.prose-editor h3:first-child {
+  margin-top: 0;
+}
+.prose-editor p {
+  margin: 0.75rem 0;
+  line-height: 1.75;
+}
+.prose-editor strong { font-weight: 650; }
+.prose-editor em { font-style: italic; }
+.prose-editor a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-editor ul,
+.prose-editor ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+.prose-editor ul { list-style: disc; }
+.prose-editor ol { list-style: decimal; }
+.prose-editor li { margin: 0.3rem 0; line-height: 1.7; }
+.prose-editor blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+  color: var(--muted-foreground);
+}
+.prose-editor code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.875em;
+  background: var(--muted);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+.prose-editor:focus-visible { outline: none; }
+
+/* ---------------------------------------------------------------------------
+   Component tuning
+--------------------------------------------------------------------------- */
+
+/* Square everything. The reference uses no rounding at all, and a rounded
+   control among square ones reads as a mistake rather than a choice. */
+button, input, textarea, select,
+[data-slot="card"], [data-slot="select-trigger"], [data-slot="tooltip-content"] {
+  border-radius: 0 !important;
+}
+
+/* Section numbers in the brief, so the three steps are scannable. */
+[data-slot="card-title"] {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+/* Inputs sit on the ground rather than on the card, which separates what you
+   type from what the app tells you. */
+input, textarea, [data-slot="select-trigger"] {
+  background-color: var(--field);
+  border-color: var(--border);
+}
+input:focus-visible, textarea:focus-visible {
+  border-color: var(--primary);
+}
+
+/* Tabs: an accent underline on the selected one, matching the nav. */
+[data-slot="tabs-trigger"][data-state="active"],
+[data-slot="tabs-trigger"][aria-selected="true"] {
+  color: var(--foreground);
+  box-shadow: inset 0 -2px 0 0 var(--primary);
+}
+
+/* The page title keeps the reference's wide display treatment. */
+.page-title {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

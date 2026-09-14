@@ -1,0 +1,16 @@
+{
+  "name": "digitizer-press",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["apps/web", "apps/api"],
+  "scripts": {
+    "dev": "npm run dev --workspace=api & npm run dev --workspace=web",
+    "dev:web": "npm run dev --workspace=web",
+    "dev:api": "npm run start:dev --workspace=api",
+    "dev:scorer": "cd services/scorer && .venv/bin/python -m uvicorn app.main:app --reload --port 8000",
+    "build": "npm run build --workspace=api && npm run build --workspace=web",
+    "test": "npm run test --workspace=api",
+    "test:scorer": "cd services/scorer && .venv/bin/python -m pytest tests/ -q"
+  },
+  "engines": { "node": ">=20" }
+}

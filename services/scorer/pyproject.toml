@@ -1,0 +1,29 @@
+[project]
+name = "humaniser-scorer"
+version = "0.1.0"
+description = "Independent AI-text detection scorer: perplexity, burstiness and surface features."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "numpy>=1.26",
+    # Unigram frequencies for the zero-install heuristic backend.
+    "wordfreq>=3.1",
+]
+
+[project.optional-dependencies]
+# The transformer backend. Heavy (~2GB with torch). The service runs without it
+# on the heuristic backend, so install this only when you want real perplexity.
+transformer = [
+    "torch>=2.4",
+    "transformers>=4.44",
+]
+# Only needed to re-fit the calibration weights from a labelled corpus.
+train = [
+    "scikit-learn>=1.5",
+    "pandas>=2.2",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,27 @@
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Fitted calibration weights are environment specific, not source.
+services/scorer/app/weights.json
+
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+
+# Bulk job records and generated articles.
+.bulk/
+
+# Saved brands and articles.
+.data/
