@@ -1,0 +1,25 @@
+# The Next.js frontend. Everything nginx does not send to /api/ lands here.
+
+[Unit]
+Description=Digitizer Press web
+After=network.target digitizerpress-api.service
+Wants=digitizerpress-api.service
+
+[Service]
+Type=simple
+User=faisalkhan-digitizerpress
+WorkingDirectory=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/apps/web
+EnvironmentFile=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/.env
+# The next binary, by absolute path into the REPO ROOT rather than into
+# apps/web. npm workspaces hoist dependencies, so apps/web/node_modules/.bin
+# does not exist and a relative path here fails at boot with a bare ENOENT.
+ExecStart=/usr/bin/node /home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/node_modules/next/dist/bin/next start --port 3000
+
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

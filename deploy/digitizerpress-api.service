@@ -1,0 +1,26 @@
+# The NestJS gateway. Reached through nginx at /api/, never directly.
+
+[Unit]
+Description=Digitizer Press API
+After=network.target digitizerpress-scorer.service
+Wants=digitizerpress-scorer.service
+
+[Service]
+Type=simple
+User=faisalkhan-digitizerpress
+WorkingDirectory=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/apps/api
+EnvironmentFile=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/.env
+ExecStart=/usr/bin/node dist/main.js
+
+Restart=always
+RestartSec=5
+
+# A bulk job holds many articles in memory at once. Raise this rather than
+# lowering BULK_CONCURRENCY if the job is being killed part way through.
+Environment=NODE_OPTIONS=--max-old-space-size=1024
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

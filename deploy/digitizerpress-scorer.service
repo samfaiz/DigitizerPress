@@ -1,0 +1,31 @@
+# The Python scoring service. Internal only: it must never be reachable from
+# the internet, which is why it binds 127.0.0.1 rather than 0.0.0.0.
+#
+# Started first and depended on by the API, because a bulk job that discovers
+# a dead scorer has already paid for its drafting batches.
+
+[Unit]
+Description=Digitizer Press scorer
+After=network.target
+
+[Service]
+Type=simple
+User=faisalkhan-digitizerpress
+WorkingDirectory=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/services/scorer
+EnvironmentFile=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/.env
+
+# One worker on purpose. Transformer inference is serialised behind a lock
+# inside the process (see perplexity.py), so extra workers would each load
+# their own ~500MB copy of the model to no benefit.
+ExecStart=/home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud/services/scorer/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+
+Restart=always
+RestartSec=5
+# Loading torch and the model takes a while on a cold start.
+TimeoutStartSec=180
+
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
