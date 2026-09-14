@@ -118,12 +118,56 @@ curl -s localhost:8000/health
 curl -s localhost:4000/api/config | head -c 200
 ```
 
+## 5b. Check the ports are free first
+
+A shared VPS will already be using the obvious ones. On this box both were
+taken by other sites:
+
+```
+4000 -> /home/webinvite/htdocs/webinvite.co/backend   (another site)
+3000 -> another next-server
+```
+
+The symptom is `EADDRINUSE` in the journal while `systemctl is-active` still
+reports `active`, because `Restart=always` keeps relaunching the service.
+
+```bash
+ss -ltnp | grep -E ':(3000|4000)'
+```
+
+If either is occupied, move this app rather than the other site. Nothing in
+the browser bundle references these ports, only nginx does, so no rebuild is
+needed:
+
+```bash
+sed -i 's/^API_PORT=.*/API_PORT=4100/' .env
+sed -i 's|--port 3000|--port 3100|' /etc/systemd/system/digitizerpress-web.service
+systemctl daemon-reload && systemctl restart digitizerpress-api digitizerpress-web
+```
+
+Then use the matching ports in the vhost.
+
+**Do not use a broad `pkill` to free a port.** `pkill -f 'dist/main.js'`
+matches every Node backend on the machine, and on a shared box that means
+other people's sites. Identify the process with `ss -ltnp` and decide from
+there.
+
 ## 6. Point nginx at them
 
-In CloudPanel: **Sites → digitizerpress.faisalkhan.cloud → Vhost**. Paste the
-two `location` blocks from `deploy/nginx-vhost.conf` inside the existing
-`server { }` block, replacing any default `location /`. Save, which reloads
-nginx.
+In CloudPanel: **Sites → digitizerpress.faisalkhan.cloud → Vhost**. Replace
+the whole file with `deploy/cloudpanel-vhost-full.conf`, adjusting the two
+ports if yours differ. Save, which reloads nginx.
+
+If the site was created as a **PHP site**, which is CloudPanel's default, its
+template will otherwise break this app. Two rules do the damage:
+
+- `location ~* ^.+\.(css|js|...)$` serves those extensions from disk. nginx
+  matches regex locations before prefix ones, so it beats `location /` and
+  every Next.js asset 404s. The page loads as unstyled HTML that does nothing.
+- The document root is now the git checkout, which contains `.env`. A template
+  that serves files from disk has no business pointing at it.
+
+The full vhost removes both and denies dotfiles explicitly.
 
 Then issue the certificate under **SSL/TLS → Let's Encrypt** if you have not.
 
