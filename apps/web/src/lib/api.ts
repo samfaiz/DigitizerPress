@@ -16,7 +16,42 @@ import type {
   StyleId,
 } from './types';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+/**
+ * Where the gateway lives.
+ *
+ * The plain `?? 'http://localhost:4000'` this replaces was a trap. Next.js
+ * inlines NEXT_PUBLIC_* at BUILD time from .env files in apps/web, not from
+ * the repo root, so a monorepo build silently produced `undefined` and the
+ * fallback shipped to production. The deployed site then asked every
+ * visitor's browser for a port on their own machine. Over HTTPS that is
+ * mixed content: the browser blocks it and reports "not secure" while
+ * insisting the certificate is valid, which sends you looking at TLS for a
+ * problem that is nowhere near TLS.
+ *
+ * The fallback is now same-origin, which is correct for every deployment in
+ * deploy/: nginx routes /api/ to the gateway on the same host. An empty base
+ * makes the paths relative, so a forgotten variable still works.
+ *
+ * localhost is used only when the PAGE ITSELF is on localhost, which is the
+ * one case where the frontend and the gateway really are on different ports.
+ */
+function resolveBase(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (configured) return configured.replace(/\/$/, '');
+
+  // Server-side render, before any request. Nothing here calls the API during
+  // SSR today, so this only has to be harmless.
+  if (typeof window === 'undefined') return 'http://localhost:4000';
+
+  const host = window.location.hostname;
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+  return isLocal ? 'http://localhost:4000' : '';
+}
+
+const BASE = resolveBase();
+
+/** Absolute URL for an API path. Exported so nothing re-derives the base. */
+export const apiUrl = (path: string): string => `${BASE}${path}`;
 
 /**
  * The shared access password, when the server asks for one.

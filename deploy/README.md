@@ -86,6 +86,16 @@ SCORER_FORCE_CPU=true
 
 ## 4. Build
 
+> `npm run build` now copies the `NEXT_PUBLIC_*` variables from the root
+> `.env` into `apps/web` first, via `scripts/sync-web-env.mjs`. That step
+> exists because Next.js reads `.env` files from its own project directory and
+> does not walk up to a monorepo root. Without it `NEXT_PUBLIC_API_URL` inlined
+> as undefined, the client fell back to `http://localhost:4000`, and the
+> deployed site asked every visitor's browser for a port on their own machine.
+> Over HTTPS that is mixed content, so the browser blocked it and said "not
+> secure" while reporting the certificate as valid, which points the
+> investigation at TLS and away from the actual cause.
+
 ```bash
 cd /home/faisalkhan-digitizerpress/htdocs/digitizerpress.faisalkhan.cloud
 

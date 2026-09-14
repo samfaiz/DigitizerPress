@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getAccessPassword, getConfig, setAccessPassword } from '@/lib/api';
+import { apiUrl, getAccessPassword, getConfig, setAccessPassword } from '@/lib/api';
 
 /**
  * Ask for the shared password, once, and only when the server wants one.
@@ -52,10 +52,12 @@ export function AccessPassword() {
       // Verified against a protected route, not just stored. Storing an
       // unchecked password means every later screen fails with a confusing
       // 401 instead of this box saying it was wrong.
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/api/library/brands`,
-        { headers: { 'x-access-password': password } },
-      );
+      // apiUrl rather than reading the env var again here. The duplicated
+      // `?? 'http://localhost:4000'` was a second copy of the same bug, and
+      // this one sat in the very first request a visitor makes.
+      const response = await fetch(apiUrl('/api/library/brands'), {
+        headers: { 'x-access-password': password },
+      });
       if (response.status === 401) {
         setAccessPassword(null);
         setError('That password was not accepted.');

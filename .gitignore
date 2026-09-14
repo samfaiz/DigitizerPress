@@ -25,3 +25,6 @@ services/scorer/app/weights.json
 
 # Saved brands and articles.
 .data/
+
+# Generated from the root .env at build time by scripts/sync-web-env.mjs
+apps/web/.env.production
