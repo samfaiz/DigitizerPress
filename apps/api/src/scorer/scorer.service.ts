@@ -18,9 +18,19 @@ export class ScorerService {
 
   async score(text: string, withSentences = true): Promise<ScoreResult> {
     const controller = new AbortController();
-    // The loop calls this several times per request. A hung scorer must fail
-    // fast rather than holding the user's request open until the proxy kills it.
-    const timeout = setTimeout(() => controller.abort(), 20_000);
+    // The loop calls this several times per request, so a hung scorer must
+    // fail rather than hold the user's request open until the proxy kills it.
+    //
+    // 20 seconds was the old value and it was measured on a Mac, where the
+    // model runs on the GPU. A plain VPS has neither CUDA nor Metal, and
+    // distilgpt2 over a 2,000-word article on a shared vCPU can take
+    // considerably longer. The result was a working scorer being reported as
+    // a dead one. Configurable now, and generous by default.
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, this.config.scorerTimeoutMs);
 
     try {
       const response = await fetch(`${this.config.scorerUrl}/score`, {
@@ -40,9 +50,28 @@ export class ScorerService {
       return (await response.json()) as ScoreResult;
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
+
+      // Two very different failures used to share one message, and the
+      // message named the wrong one. A slow scorer was reported as an absent
+      // scorer, which sends you to `systemctl status` to look at a process
+      // that is running perfectly well.
+      if (timedOut) {
+        const seconds = Math.round(this.config.scorerTimeoutMs / 1000);
+        this.logger.error(
+          `scorer did not answer within ${seconds}s at ${this.config.scorerUrl}`,
+        );
+        throw new ServiceUnavailableException(
+          `The scoring service took longer than ${seconds}s to answer. It is ` +
+            'running, just slow: this is usual for long articles on a CPU-only ' +
+            'server. Raise SCORER_TIMEOUT_MS, or use a shorter article.',
+        );
+      }
+
       this.logger.error(`scorer unreachable at ${this.config.scorerUrl}`, error as Error);
       throw new ServiceUnavailableException(
-        'Scoring service is unavailable. Start it with: npm run dev:scorer',
+        'Scoring service is not reachable at ' +
+          `${this.config.scorerUrl}. Check it is running: ` +
+          'systemctl status digitizerpress-scorer',
       );
     } finally {
       clearTimeout(timeout);

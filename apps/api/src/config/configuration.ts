@@ -21,6 +21,16 @@ export interface AppConfig {
   port: number;
   corsOrigin: string;
   scorerUrl: string;
+  /**
+   * How long to wait for one /score call.
+   *
+   * The old hardcoded 20s was measured on a Mac, where the model runs on the
+   * GPU. A CPU-only VPS is several times slower on the same article, and the
+   * timeout presented as "scoring service is unavailable" even though the
+   * service was running normally. Generous by default; the loop still fails
+   * rather than hanging forever.
+   */
+  scorerTimeoutMs: number;
   detectors: {
     /** Drives the loop. Make it the detector you are actually judged by. */
     primary: DetectorName;
@@ -215,6 +225,7 @@ export const loadConfig = (): AppConfig => ({
   port: int(process.env.API_PORT, 4000),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
   scorerUrl: process.env.SCORER_URL ?? 'http://localhost:8000',
+  scorerTimeoutMs: int(process.env.SCORER_TIMEOUT_MS, 120_000),
   detectors: {
     // Local by default so a clean clone costs nothing. Change it the moment
     // you know which detector you are actually being checked against.
