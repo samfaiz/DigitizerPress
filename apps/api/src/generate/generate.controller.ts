@@ -13,6 +13,7 @@ import {
   type KeywordResponse,
   type OutlineResponse,
 } from './dto/generate.dto.js';
+import { LibraryService } from '../library/library.service.js';
 import { BulkService } from './bulk.service.js';
 import { GenerateService } from './generate.service.js';
 import { ProgressService } from './progress.service.js';
@@ -24,6 +25,7 @@ export class GenerateController {
     private readonly progress: ProgressService,
     private readonly cache: CacheService,
     private readonly bulk: BulkService,
+    private readonly library: LibraryService,
   ) {}
 
   /**
@@ -188,15 +190,43 @@ export class GenerateController {
    * An article below the threshold is still returned, marked undelivered, so
    * you can see what fell short rather than being handed nothing.
    */
+  /**
+   * Generate one article, and file it under its brand.
+   *
+   * The filing used to be a button the user had to remember to press. That is
+   * the wrong default for something that costs about twenty cents and several
+   * minutes to produce: forgetting the button threw the article away, and the
+   * browser tab was the only copy. Bulk jobs already filed automatically, so
+   * the two paths disagreed about whether generating an article means keeping
+   * it.
+   *
+   * Saving is best-effort and never fails the request. A filing problem must
+   * not lose an article that has already been paid for; the caller still gets
+   * the full draft either way, and `saved` says what happened.
+   */
   @Post('draft')
   @HttpCode(200)
   @UseGuards(RateLimitGuard)
-  async draft(@Body() body: DraftRequestDto): Promise<DraftResponse> {
-    return this.generate.draft(
+  async draft(
+    @Body() body: DraftRequestDto,
+  ): Promise<DraftResponse & { saved?: { slug: string; id: string } | null }> {
+    const draft = await this.generate.draft(
       body.brief,
       body.outline,
       body.threshold ?? 90,
       body.maxAttempts ?? 2,
     );
+
+    const slug = LibraryService.slugify(body.brief.brandName ?? '');
+    if (!slug) return { ...draft, saved: null };
+
+    try {
+      const meta = await this.library.saveArticle(slug, draft, {
+        topic: body.brief.topic,
+      });
+      return { ...draft, saved: { slug, id: meta.id } };
+    } catch {
+      return { ...draft, saved: null };
+    }
   }
 }

@@ -184,10 +184,32 @@ export class LibraryService {
   async saveArticle(
     slug: string,
     draft: DraftResponse,
-    extra: { topic: string; note?: string } ,
+    extra: { topic: string; note?: string },
   ): Promise<SavedArticleMeta> {
     const dir = this.articlesDir(slug);
     await mkdir(dir, { recursive: true });
+
+    // A brand folder with articles but no profile.json would be invisible:
+    // listBrands reads the profile and skips anything it cannot parse, so the
+    // articles would exist on disk and appear nowhere in the UI. Write a
+    // minimal profile when one is missing rather than leaving that hole.
+    if (!(await this.readBrand(slug).catch(() => null))) {
+      await writeFile(
+        join(this.brandDir(slug), 'profile.json'),
+        JSON.stringify(
+          {
+            slug,
+            brandName: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+            brandDescription: '',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+    }
 
     const id = randomUUID().slice(0, 12);
     const meta: SavedArticleMeta = {

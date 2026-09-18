@@ -490,15 +490,26 @@ export function Generator() {
                       }
                     }}
                   >
-                    {filing ? 'Saving…' : 'Save to library'}
+                    {filing
+                      ? 'Saving…'
+                      : draft.saved
+                        ? 'Save this version'
+                        : 'Save to library'}
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              {filed && (
+              {(filed || draft.saved) && (
                 <p className="mb-3 border border-primary/40 bg-primary/5 p-2 text-xs">
-                  {filed}. Open it from the Library tab.
+                  {filed ?? 'Saved to the library automatically'}. Open it from
+                  the Library tab.
+                </p>
+              )}
+              {draft.saved === null && !filed && (
+                <p className="mb-3 border border-amber-500/40 bg-amber-500/5 p-2 text-xs">
+                  This article was not filed automatically, usually because the
+                  brief has no brand name. Use Save to library to keep it.
                 </p>
               )}
               <Tabs defaultValue="scorecard">

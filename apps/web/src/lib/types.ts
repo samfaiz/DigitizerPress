@@ -268,6 +268,14 @@ export interface FactFlag {
 }
 
 export interface DraftResponse {
+  /**
+   * Where the server filed this article, or null if it could not.
+   *
+   * Filing is automatic and best-effort: an article that cost money and
+   * minutes should not depend on the user remembering a button, but a filing
+   * problem must not fail the generation either.
+   */
+  saved?: { slug: string; id: string } | null;
   markdown: string;
   seo: SeoPackage;
   score: ScoreResult;
