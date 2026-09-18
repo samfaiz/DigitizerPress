@@ -3,9 +3,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HeatMapEditor } from '@/components/heat-map-editor';
+import { ImproveTips } from '@/components/improve-tips';
+import { ReadabilityPanel } from '@/components/readability-panel';
 import { RichEditor } from '@/components/rich-editor';
 import { ScoreDial } from '@/components/score-dial';
+import { ScorecardPanel } from '@/components/scorecard-panel';
 import { SeoPanel } from '@/components/seo-panel';
+import { UsagePanel } from '@/components/usage-panel';
+import { WhyItWorks } from '@/components/why-it-works';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -115,6 +121,11 @@ export function Library() {
     },
     [],
   );
+
+  // Claims the generator could not trace back to the brief. Worth surfacing
+  // in the tab label: these are the ones that become a correction on a live
+  // page, and an archived article is exactly where you go to check.
+  const unsupported = (open?.draft.factFlags ?? []).filter((flag) => !flag.inBrief);
 
   const saveUrl = useCallback(async () => {
     if (!open) return;
@@ -383,11 +394,31 @@ export function Library() {
                   </div>
                 </div>
 
-                <Tabs defaultValue="article">
+                {/*
+                  The same analysis the Write tab showed when this was
+                  generated. All of it was already stored inside the saved
+                  article; the library simply was not rendering it, so an
+                  archived article looked far thinner than a fresh one and
+                  there was no way to check later why a piece scored as it did.
+                */}
+                <Tabs defaultValue="scorecard">
                   <TabsList>
+                    <TabsTrigger value="scorecard">Scorecard</TabsTrigger>
                     <TabsTrigger value="article">Article</TabsTrigger>
+                    <TabsTrigger value="heatmap">Heat map</TabsTrigger>
+                    <TabsTrigger value="improve">Improve</TabsTrigger>
+                    <TabsTrigger value="why">Why this works</TabsTrigger>
                     <TabsTrigger value="seo">SEO</TabsTrigger>
+                    <TabsTrigger value="checks">Checks</TabsTrigger>
+                    <TabsTrigger value="facts">
+                      Facts{unsupported.length > 0 ? ` (${unsupported.length})` : ''}
+                    </TabsTrigger>
+                    <TabsTrigger value="cost">Cost</TabsTrigger>
                   </TabsList>
+
+                  <TabsContent value="scorecard" className="pt-4">
+                    <ScorecardPanel result={open.draft} />
+                  </TabsContent>
 
                   <TabsContent value="article" className="space-y-3 pt-4">
                     {/* Read-only in effect: edits here are not written back,
@@ -403,6 +434,33 @@ export function Library() {
                     </p>
                   </TabsContent>
 
+                  <TabsContent value="heatmap" className="pt-4">
+                    {/* readOnly: a saved article is a record of what shipped,
+                        so a rewrite button here would spend money on a change
+                        that is then discarded. */}
+                    <HeatMapEditor
+                      readOnly
+                      text={open.draft.markdown}
+                      score={open.draft.score}
+                      style="standard"
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="improve" className="pt-4">
+                    <ImproveTips
+                      score={open.draft.score}
+                      compliance={open.draft.compliance ?? []}
+                      usage={open.draft.usage}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="why" className="pt-4">
+                    <WhyItWorks
+                      score={open.draft.score}
+                      before={open.draft.humanizePasses?.[0]?.score}
+                    />
+                  </TabsContent>
+
                   <TabsContent value="seo" className="pt-4">
                     {open.draft.seo ? (
                       <SeoPanel seo={open.draft.seo} url={open.meta.url} />
@@ -411,6 +469,61 @@ export function Library() {
                         This article was saved without an SEO package.
                       </p>
                     )}
+                  </TabsContent>
+
+                  <TabsContent value="checks" className="space-y-4 pt-4">
+                    {(open.draft.compliance ?? []).length > 0 && (
+                      <div className="space-y-1">
+                        {open.draft.compliance.map((check) => (
+                          <div key={check.id} className="flex gap-2 text-sm">
+                            <span
+                              className={cn(
+                                'mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full',
+                                check.status === 'good'
+                                  ? 'bg-emerald-500'
+                                  : check.status === 'warn'
+                                    ? 'bg-amber-500'
+                                    : 'bg-rose-500',
+                              )}
+                            />
+                            <span className="flex-1">
+                              <span className="font-medium">{check.label}</span>{' '}
+                              <span className="text-muted-foreground">
+                                {check.detail}
+                              </span>
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {open.draft.score.readability && (
+                      <ReadabilityPanel before={open.draft.score.readability} />
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="facts" className="space-y-3 pt-4">
+                    {(open.draft.factFlags ?? []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Nothing was flagged as needing a source.
+                      </p>
+                    ) : (
+                      open.draft.factFlags.map((flag, index) => (
+                        <div key={index} className="border-l-2 border-border pl-3">
+                          <p className="text-sm">{flag.text}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {flag.kind}
+                            {' · '}
+                            {flag.inBrief
+                              ? 'Traceable to your brief.'
+                              : 'Not traceable to your brief. Check before publishing.'}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="cost" className="pt-4">
+                    <UsagePanel usage={open.draft.usage} />
                   </TabsContent>
                 </Tabs>
               </CardContent>

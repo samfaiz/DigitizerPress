@@ -31,7 +31,15 @@ interface HeatMapEditorProps {
   score: ScoreResult;
   style: StyleId;
   /** Called when a rewrite is kept. Hands back the whole document. */
-  onChange: (text: string, score: ScoreResult) => void;
+  onChange?: (text: string, score: ScoreResult) => void;
+  /**
+   * Show the colouring but offer no rewriting.
+   *
+   * Used by the library, where an article is a record of what shipped. A
+   * rewrite button there would spend money to produce a change that is then
+   * discarded, which is worse than not offering it.
+   */
+  readOnly?: boolean;
 }
 
 function toneFor(score: number, scored: boolean): string {
@@ -43,7 +51,13 @@ function toneFor(score: number, scored: boolean): string {
   return 'bg-emerald-500/20 hover:bg-emerald-500/35';
 }
 
-export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorProps) {
+export function HeatMapEditor({
+  text,
+  score,
+  style,
+  onChange,
+  readOnly = false,
+}: HeatMapEditorProps) {
   const [selected, setSelected] = useState<SentenceScore | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -107,7 +121,7 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
   );
 
   const keep = useCallback(() => {
-    if (!pending) return;
+    if (!pending || !onChange) return;
     onChange(pending.text, pending.score);
     // Offsets belong to the old text, so the selection is dropped rather than
     // left pointing at a span that has moved.
@@ -132,13 +146,13 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
         role={sentence.scored ? 'button' : undefined}
         tabIndex={sentence.scored ? 0 : undefined}
         onClick={() => {
-          if (!sentence.scored) return;
+          if (!sentence.scored || readOnly) return;
           setPending(null);
           setNote(null);
           setSelected(isSelected ? null : sentence);
         }}
         onKeyDown={(event) => {
-          if (!sentence.scored) return;
+          if (!sentence.scored || readOnly) return;
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             setPending(null);
@@ -149,7 +163,7 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
         className={cn(
           'rounded-sm px-0.5 text-foreground transition-colors',
           toneFor(sentence.ai_score, sentence.scored),
-          sentence.scored && 'cursor-pointer',
+          sentence.scored && !readOnly && 'cursor-pointer',
           isSelected && 'ring-2 ring-primary',
         )}
       >
@@ -165,7 +179,11 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <span>Click a sentence to rewrite it.</span>
+        <span>
+          {readOnly
+            ? 'Shading shows how machine-like each sentence read when this was saved.'
+            : 'Click a sentence to rewrite it.'}
+        </span>
         {stats && (
           <>
             <span>
@@ -181,6 +199,7 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
 
       <p className="whitespace-pre-wrap text-sm leading-7">{nodes}</p>
 
+      {!readOnly && (
       <p className="text-xs text-muted-foreground">
         Shading is relative to this article: the reddest sentence here is the most
         machine-like one in this text, not a verdict on its own. Rewriting single
@@ -188,8 +207,9 @@ export function HeatMapEditor({ text, score, style, onChange }: HeatMapEditorPro
         document score, which comes from the rhythm of the whole piece. Run another
         humanize pass for that.
       </p>
+      )}
 
-      {selected && (
+      {selected && !readOnly && (
         <div className="space-y-3 rounded border bg-muted/30 p-3">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-xs font-medium">
