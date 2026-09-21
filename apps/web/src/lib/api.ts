@@ -109,7 +109,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     });
   } catch {
     throw new ApiError(
-      'Cannot reach the API. Is it running on port 4000?',
+      // Name the address actually being called. The old text said "port 4000"
+      // unconditionally, which on a deployed site describes a machine the
+      // visitor does not have and sends everyone looking in the wrong place.
+      BASE
+        ? `Cannot reach the API at ${BASE}. The server may be restarting, or ` +
+          'the request may have timed out.'
+        : 'Cannot reach the API on this site. The server may be restarting.',
       0,
     );
   }

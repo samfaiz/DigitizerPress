@@ -32,6 +32,19 @@ export interface BrandProfile {
   callToAction?: string;
   internalLinks?: string[];
   products?: unknown[];
+  /**
+   * Publisher identity, which the E-E-A-T checks read directly.
+   *
+   * Brand-level, so it belongs on the profile rather than being retyped for
+   * every article. experienceNotes is deliberately NOT here: it describes
+   * what you have seen about THIS topic and changes per article.
+   */
+  brandUrl?: string;
+  brandLinks?: string[];
+  authorName?: string;
+  authorRole?: string;
+  authorBio?: string;
+
   style?: string;
   wordCount?: number;
   createdAt?: number;

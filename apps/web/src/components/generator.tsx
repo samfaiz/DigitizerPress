@@ -211,6 +211,73 @@ export function Generator() {
               />
             </Field>
 
+            {/*
+              E-E-A-T inputs.
+              
+              These are not decorative. The E-E-A-T checker reads
+              experienceNotes, brandUrl and brandLinks directly, and every one
+              of its Experience and Authoritativeness checks fails when they
+              are empty. They existed in the API and in the Brief type from
+              the start and simply had no form, so those checks could never
+              pass no matter what anyone wrote.
+            */}
+            <Field
+              label="First-hand experience"
+              hint="What you have actually seen: returns data, customer complaints, what staff hear in store. This is the single strongest E-E-A-T signal, and it is the one a model cannot invent."
+            >
+              <Textarea
+                value={brief.experienceNotes ?? ''}
+                onChange={(event) => set('experienceNotes', event.target.value)}
+                placeholder="Customers in Dubai tell us summer wear is the top return reason. Our own testing showed the 30% concentration lasting a full workday through AC and heat."
+                className="min-h-20"
+              />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Brand homepage" hint="Used in the JSON-LD publisher block.">
+                <Input
+                  value={brief.brandUrl ?? ''}
+                  onChange={(event) => set('brandUrl', event.target.value)}
+                  placeholder="https://vierro.ae"
+                />
+              </Field>
+              <Field
+                label="Brand profile links"
+                hint="Instagram, LinkedIn, Trustpilot. These become sameAs in the schema, which is how a search engine confirms the publisher is a real organisation."
+              >
+                <TagInput
+                  value={brief.brandLinks ?? []}
+                  onChange={(list) => set('brandLinks', list)}
+                  placeholder="https://instagram.com/vierro"
+                  max={10}
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Author name" hint="Leave blank to publish as the brand.">
+                <Input
+                  value={brief.authorName ?? ''}
+                  onChange={(event) => set('authorName', event.target.value)}
+                  placeholder="Faisal Khan"
+                />
+              </Field>
+              <Field label="Author role">
+                <Input
+                  value={brief.authorRole ?? ''}
+                  onChange={(event) => set('authorRole', event.target.value)}
+                  placeholder="Founder, Vierro"
+                />
+              </Field>
+              <Field label="Author bio" hint="One line. Why they can speak to this.">
+                <Input
+                  value={brief.authorBio ?? ''}
+                  onChange={(event) => set('authorBio', event.target.value)}
+                  placeholder="Twelve years sourcing fragrance across the Gulf."
+                />
+              </Field>
+            </div>
+
             <BrandProfiles
               brief={brief}
               onLoad={(profile: BrandProfile) =>
@@ -228,6 +295,11 @@ export function Generator() {
                   callToAction: profile.callToAction,
                   internalLinks: profile.internalLinks,
                   products: profile.products,
+                  brandUrl: profile.brandUrl,
+                  brandLinks: profile.brandLinks,
+                  authorName: profile.authorName,
+                  authorRole: profile.authorRole,
+                  authorBio: profile.authorBio,
                   style: profile.style ?? current.style,
                   wordCount: profile.wordCount ?? current.wordCount,
                 }))

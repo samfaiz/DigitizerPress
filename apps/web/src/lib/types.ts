@@ -357,6 +357,11 @@ export interface SavedBrand {
   callToAction?: string;
   internalLinks?: string[];
   products?: Product[];
+  brandUrl?: string;
+  brandLinks?: string[];
+  authorName?: string;
+  authorRole?: string;
+  authorBio?: string;
   style?: StyleId;
   wordCount?: number;
   createdAt?: number;

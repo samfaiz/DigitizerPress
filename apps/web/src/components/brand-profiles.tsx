@@ -38,6 +38,11 @@ export type BrandProfile = {
   callToAction?: string;
   internalLinks?: string[];
   products?: Product[];
+  brandUrl?: string;
+  brandLinks?: string[];
+  authorName?: string;
+  authorRole?: string;
+  authorBio?: string;
   style?: Brief['style'];
   wordCount?: number;
 };
@@ -57,6 +62,11 @@ export function profileFromBrief(label: string, brief: Brief): BrandProfile {
     callToAction: brief.callToAction,
     internalLinks: brief.internalLinks,
     products: brief.products,
+    brandUrl: brief.brandUrl,
+    brandLinks: brief.brandLinks,
+    authorName: brief.authorName,
+    authorRole: brief.authorRole,
+    authorBio: brief.authorBio,
     style: brief.style,
     wordCount: brief.wordCount,
   };
@@ -102,6 +112,11 @@ function toProfile(brand: SavedBrand): BrandProfile {
     callToAction: brand.callToAction,
     internalLinks: brand.internalLinks,
     products: brand.products,
+    brandUrl: brand.brandUrl,
+    brandLinks: brand.brandLinks,
+    authorName: brand.authorName,
+    authorRole: brand.authorRole,
+    authorBio: brand.authorBio,
     style: brand.style,
     wordCount: brand.wordCount,
   };

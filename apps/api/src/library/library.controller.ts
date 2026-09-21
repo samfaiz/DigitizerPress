@@ -55,6 +55,11 @@ export class LibraryController {
       callToAction: b.callToAction,
       internalLinks: b.internalLinks,
       products: b.products,
+      brandUrl: b.brandUrl,
+      brandLinks: b.brandLinks,
+      authorName: b.authorName,
+      authorRole: b.authorRole,
+      authorBio: b.authorBio,
       style: b.style,
       wordCount: b.wordCount,
     };
